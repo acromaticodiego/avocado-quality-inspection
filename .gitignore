@@ -1,0 +1,7 @@
+*.jpeg
+*.png
+.users.db
+.aguacatemodel.pt
+# Entorno virtual
+venv/
+.venv/
