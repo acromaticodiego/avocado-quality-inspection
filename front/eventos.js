@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Referencias a los elementos del DOM
+    // --- Referencias a elementos del DOM ---
     const video = document.getElementById('video-stream');
     const canvas = document.getElementById('canvas');
     const processedImage = document.getElementById('processed-image');
@@ -11,23 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Flag para evitar múltiples peticiones simultáneas
     let isProcessing = false;
 
-    // Iniciar el streaming de la cámara y el escaneo en tiempo real
-    if (video) {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-                // Iniciar el escaneo en tiempo real después de que el video esté listo
-                setInterval(escanear, 1500); // Escanear cada 1.5 segundos
-            })
-            .catch(err => {
-                console.error("Error al acceder a la cámara:", err);
-                if (statusText) {
-                    statusText.textContent = "Error: No se pudo acceder a la cámara.";
-                    statusText.classList.add('text-red-500');
-                }
-            });
-    }
-
+ 
     // --- Función para escanear y enviar al servidor ---
     async function escanear() {
         if (isProcessing) return;
@@ -51,15 +35,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     body: formData
                 });
 
-                if (!response.ok) {
-                    throw new Error("Error en la respuesta del servidor");
-                }
+                if (!response.ok) throw new Error("Error en la respuesta del servidor");
 
                 const data = await response.json();
                 const resultFilename = data.result_filename;
-                
+
                 processedImage.src = `http://127.0.0.1:8000/result/${resultFilename}?t=${new Date().getTime()}`;
-                
+  
                 if (statusText) statusText.textContent = "Escaneo completo.";
             } catch (error) {
                 console.error("Error al procesar la imagen:", error);
@@ -73,7 +55,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 'image/jpeg');
     }
 
-    // Lógica para el botón de salir
+    // --- Inicializar cámara y escaneo en tiempo real ---
+    if (video) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                setInterval(escanear, 1500); // Escanear cada 1.5 segundos
+            })
+            .catch(err => {
+                console.error("Error al acceder a la cámara:", err);
+                if (statusText) {
+                    statusText.textContent = "Error: No se pudo acceder a la cámara.";
+                    statusText.classList.add('text-red-500');
+                }
+            });
+    }
+
+    // --- Botón salir ---
     if (salirButton) {
         salirButton.addEventListener("click", () => {
             const stream = video.srcObject;
@@ -85,12 +83,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- Función para registro de usuario ---
+    // --- Función para registrar usuario ---
     async function registrarUsuario(form, mensaje) {
         const formData = new FormData(form);
         const usuario = {
             nombre: formData.get("nombre"),
-            gmail: formData.get("email"), 
+            email: formData.get("email"), // 👈 usa "email" consistente con Pydantic
             password: formData.get("password"),
             edad: parseInt(formData.get("edad"))
         };
@@ -148,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Eventos de usuario
+    // --- Eventos de formularios ---
     const registroForm = document.getElementById("registroForm");
     const registroMensaje = document.getElementById("mensaje");
     if (registroForm) {
@@ -168,6 +166,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-document.getElementById("salir").addEventListener("click", () => {
-    window.location.href = "ingreso.html";
-});
